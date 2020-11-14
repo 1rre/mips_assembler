@@ -10,6 +10,6 @@ defmodule Mips do
   end
 
   def make_files do
-    Enum.each(["0-assembly", "1-hex"], &try do File.touch!(&1) rescue _ -> File.mkdir!("0-assembly") end)
+    Enum.each(["0-assembly", "1-hex"], &File.mkdir(&1))
   end
 end
