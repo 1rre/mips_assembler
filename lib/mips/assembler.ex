@@ -1,11 +1,9 @@
 defmodule Mips.Assembler do
-  import Mips.Const
+  import Mips.Resolvers
 
   @spec assemble() :: list(<<_::32>>)
   @spec read_files() :: list(list(binary()))
   @spec format_file(lines::list(binary())) :: list(binary())
-  @spec format_line(line::binary)::bitstring()
-  @spec extract_labels(list({line::binary(), index::integer()})) :: %{{binary(), integer()} => {binary(), integer()}}
 
   @doc """
     Run the assembler on each .s or .asm file, converting it to MIPS machine code.
@@ -18,27 +16,109 @@ defmodule Mips.Assembler do
 
   def assemble do
     read_files()
-    |> Enum.map(fn {f_name, lines} -> # Change back to each when debugging complete
-      labels = extract_labels(lines)
-      {Enum.reject(lines, &String.match?(elem(&1, 0), ~r/[a-z|_]+:/))
-      |> Enum.map(fn {line, l_num} ->
-        try do
-          format_line(line)
-          |> Mips.Hex.hex()
-        catch
-          :throw, [reg_name: reg] -> Mips.Exception.exception([file: f_name, line: l_num, message: "Unrecognised register: #{reg}"])
-            |> raise
-          _ -> Mips.Exception.exception([file: f_name, line: l_num, message: "Unrecognised instruction '#{line}'"])
-            |> Exception.message()
-            |> raise
-        end
-      end), f_name}
+    |> Enum.map(&assemble_file/1)
+  end
+
+  ###################################################
+  # Assemble a single file containing mips assembly #
+
+  defp assemble_file({f_name, lines}) do
+
+    {data, text} = Enum.chunk_by(lines, &(elem(&1, 0) in [".data",".text"]))
+    |> Enum.chunk_every(2)
+    |> Enum.split_with(&hd(&1) |> hd() |> elem(0) == ".data")
+
+    {data_labels, data_hex} = try do
+      assemble_data(data)
+    catch
+      :throw, {l_num, reason} ->
+        Mips.Exception.raise([file: f_name, line: l_num, message: reason])
+    end
+
+    {text_labels, text_hex} = try do
+      assemble_text(text)
+      {%{}, <<>>}
+     catch
+      :throw, {l_num, reason} ->
+        Mips.Exception.raise([file: f_name, line: l_num, message: reason])
+    end
+
+    case Map.keys(data_labels) ++ Map.keys(text_labels) |> Enum.frequencies |> Enum.max_by(&elem(&1, 1), fn -> {nil, 1} end) do
+      {_, 1} -> :ok
+      {label, _} ->
+        d_pos = Enum.find(data, 0, fn {_, line} -> String.contains?(line, label) end) |> elem(0)
+        t_pos = Enum.find(text, 0, fn {_, line} -> String.contains?(line, label) end) |> elem(0)
+        Mips.Exception.raise([
+          file: f_name,
+          line: max(d_pos, t_pos),
+          message: "Label #{label} declared twice, first declared on line #{min(d_pos, t_pos)}"
+        ]) |> exit()
+    end
+
+    0
+  end
+
+  ##########################################################################################################################
+  # As we don't know if our input is going to be in SPIM or MIPS format, this converts both data and instructions to hex." #
+
+  defp assemble_text(text) do
+    Enum.map(text, fn
+      [[{".text", _}]] -> {%{}, <<>>}
+      [[{".text", _}], [instr]] -> Enum.map(instr, fn
+        {op, l_num} -> :ok
+      end)
+      [instr] -> Enum.map(instr, fn
+        {".data", l_num} ->
+          throw({l_num, "Unexpected data declaration (did you forget to use .text or .data at the start of your program?)"})
+        {".text", l_num} ->
+          throw({l_num, "Unexpected text declaration (did you forget to use .text or .data at the start of your program)"})
+        {op, l_num} -> :ok
+      end)
+      [_, [{what, l_num}]] ->
+        throw({l_num, "Unexpected #{what} (did you forget to use .text or .data at the start of your program?)"})
     end)
   end
 
-  def test_format(ln) do
-    format_line(ln)
-    |> IO.puts
+  #####################################################################################################
+  # Convert data directives to their hex representation. These will be appended to the end of the hex #
+
+  defp assemble_data(data) do
+    Enum.map(data, fn [_, dec] ->
+      Enum.map(dec, fn
+        {<<".align ", rest::binary>>, l_num} ->
+          try do
+            resolve_data(".align "<>rest)
+          catch
+            :throw, reason -> throw {l_num, reason}
+          end
+        {<<".space ", rest::binary>>, l_num} ->
+          try do
+            resolve_data(".space "<>rest)
+          catch
+            :throw, reason -> throw {l_num, reason}
+          end
+        {str, l_num} ->
+          try do
+            [header, dat] = String.split(str, ": ")
+            {header, resolve_data(dat), l_num}
+          catch
+            :throw, reason -> throw {l_num, reason}
+            _,_ -> throw {l_num, "Error parsing '#{str}' as data"}
+          end
+        end
+      )
+    end)
+    |> List.flatten
+    |> Enum.reduce({%{}, <<>>}, fn
+      %{align: to}, {map, acc}  ->
+        size = Integer.mod(to - byte_size(acc), to)
+        {map, <<acc::bits, 0::size(size)>>}
+      {label, data, l_num}, {map, acc} ->
+        if Map.has_key?(map, label),
+        do: throw({l_num, "Duplicate label '#{label}'"}),
+        else: {Map.put(map, label, byte_size(acc)), <<acc::bits, data::bits>>}
+      data, {map, acc} -> {map, <<acc::bits, data::bits>>}
+    end)
   end
 
 
@@ -51,6 +131,7 @@ defmodule Mips.Assembler do
       |> Enum.filter(&Regex.match?(~r/.+\.(asm|s)/, &1))
       |> Enum.map(fn f_name ->
         {f_name, File.read!(f_name)
+          |> String.replace(~r/(?<_>[a-z|_]+):([[:space:]]*)/im,"\\g{1}:\s")
           |> String.split(~r/[[:space:]]*\n[[:space:]]*/)
           |> Enum.with_index(1)
           |> format_file()}
@@ -67,51 +148,12 @@ defmodule Mips.Assembler do
       String.replace(line, ~r/#.*\z/, "")
       |> String.trim()
       |> String.replace(~r/[[:space:]]+/, " ")
-      |> String.replace(~r/\A(?<_>[a-z|_]+):\s/im,"\\g{1}:\n")
       |> String.replace(~r/[[:blank:]]?,[[:blank:]]?/, ",\s")
       |> String.split("\n")
       |> Enum.zip([i,i])
     end)
     |> List.flatten()
     |> Enum.reject(&elem(&1, 0) == "")
-  end
-
-
-  ##############################################################################################
-  # Format the line by converting to lowercase (except labels) and registers to their bitfield #
-
-  defp format_line(op) when op in op_1(), do: String.downcase(op)
-  defp format_line(line) do
-    l_arr = String.split(line, " ", parts: 2)
-    if length(l_arr) < 2, do: throw("")
-    [op, ar] = l_arr
-    [(String.downcase(op)
-    |> String.pad_trailing(7)) | (
-      String.split(ar, ", ")
-      |> Enum.map(fn arg ->
-        case arg do
-          "$zero" -> <<0::5>>
-          <<?$,rest::binary>> when rest not in registers() -> throw([reg_name: <<?$,rest::binary>>])
-          <<?$,a::8,b::8>> when a in ?0..?2 or a == ?3 and b in ?0..?1 -> <<(a-?0)*10+(b-?0)::5>>
-          <<?$,a::8>> when a in ?0..?9 -> <<a-?0::5>>
-          <<?$,a::16>> -> resolve_reg(a)
-          _ -> cond do
-          Enum.all?(to_charlist(arg), & &1 in ?0..?9) -> <<String.to_integer(arg)::32>>
-          String.match?(arg, ~r/0x[[:xdigit:]]+/i) -> <<String.to_integer(String.trim(arg, "0x"), 16)::32>>
-          true -> arg
-          end
-        end
-      end)
-    )] |> Enum.into(<<>>, fn <<x::bits>> -> <<x::bits>> end)
-  end
-
-
-  ####################################################################
-  # Get the line numbers of each of the labels & store them in a map #
-
-  defp extract_labels(lines) do
-    Enum.filter(lines, &String.match?(elem(&1, 0), ~r/[a-z|_]+:/))
-    |> Map.new()
   end
 
 end
