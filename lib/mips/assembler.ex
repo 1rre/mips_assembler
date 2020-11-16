@@ -64,8 +64,13 @@ defmodule Mips.Assembler do
   defp assemble_text(text) do
     Enum.map(text, fn
       [[{".text", _}]] -> {%{}, <<>>}
-      [[{".text", _}], [instr]] -> Enum.map(instr, fn
-        {op, l_num} -> :ok
+      [[{".text", _}], instr] -> Enum.map(instr, fn
+        {op, l_num} ->
+          try do
+            resolve_op(op)
+          catch
+            :throw, reason -> throw {l_num, reason}
+          end
       end)
       [instr] -> Enum.map(instr, fn
         {".data", l_num} ->

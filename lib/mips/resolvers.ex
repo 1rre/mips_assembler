@@ -106,6 +106,14 @@ defmodule Mips.Resolvers do
     %{align: size}
   end
 
+  def resolve_op(<<".globl ", _::bits>>), do: {nil, <<>>}  # Global directives aren't needed for us?
+  def resolve_op(<<".global ", _::bits>>), do: {nil, <<>>}
+  def resolve_op(instr) do
+    case String.split(instr, ": ") do
+      [label, op] -> :ok
+      [op] -> :ok
+    end
+  end
 
   def pow_2(0), do: 1
   def pow_2(x), do: 2 * pow_2(x - 1)
