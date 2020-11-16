@@ -1,11 +1,10 @@
 defmodule Mips.Assembler do
-
-  #require Mips.Const
   import Mips.Const
 
-  @spec assemble() :: :ok
+  @spec assemble() :: list(<<_::32>>)
   @spec read_files() :: list(list(binary()))
   @spec format_file(lines::list(binary())) :: list(binary())
+  @spec format_line(line::binary)::bitstring()
   @spec extract_labels(list({line::binary(), index::integer()})) :: %{{binary(), integer()} => {binary(), integer()}}
 
   @doc """
@@ -19,22 +18,21 @@ defmodule Mips.Assembler do
 
   def assemble do
     read_files()
-    |> Enum.each(fn {f_name, lines} ->
+    |> Enum.map(fn {f_name, lines} -> # Change back to each when debugging complete
       labels = extract_labels(lines)
-      Enum.reject(lines, &String.match?(elem(&1, 0), ~r/[a-z|_]+:/))
+      {Enum.reject(lines, &String.match?(elem(&1, 0), ~r/[a-z|_]+:/))
       |> Enum.map(fn {line, l_num} ->
         try do
           format_line(line)
           |> Mips.Hex.hex()
         catch
           :throw, [reg_name: reg] -> Mips.Exception.exception([file: f_name, line: l_num, message: "Unrecognised register: #{reg}"])
+            |> raise
+          _ -> Mips.Exception.exception([file: f_name, line: l_num, message: "Unrecognised instruction '#{line}'"])
             |> Exception.message()
-            |> exit
-          _ -> Mips.Exception.exception([file: f_name, line: l_num, message: "Could not parse '#{line}'"])
-            |> Exception.message()
-            |> exit
+            |> raise
         end
-      end)
+      end), f_name}
     end)
   end
 
@@ -61,8 +59,8 @@ defmodule Mips.Assembler do
 
   defp format_file(lines) do
     Enum.map(lines, fn {line, i} ->
-      String.trim(line)
-      |> String.replace(~r/#.*\z/, "")
+      String.replace(line, ~r/#.*\z/, "")
+      |> String.trim()
       |> String.replace(~r/[[:space:]]+/, " ")
       |> String.replace(~r/\A(?<_>[a-z|_]+):\s/im,"\\g{1}:\n")
       |> String.replace(~r/[[:blank:]]?,[[:blank:]]?/, ",\s")
@@ -77,27 +75,30 @@ defmodule Mips.Assembler do
   ##############################################################################################
   # Format the line by converting to lowercase (except labels) and registers to their bitfield #
 
-  def format_line(line) do
-    [op, ar] = String.split(line, " ", parts: 2)
+  defp format_line(op) when op in op_1(), do: String.downcase(op)
+  defp format_line(line) do
+    l_arr = String.split(line, " ", parts: 2)
+    if length(l_arr) < 2, do: throw("")
+    [op, ar] = l_arr
     (String.downcase(op)
     |> String.pad_trailing(7))
     <> (
       String.split(ar, ", ")
       |> Enum.map(fn arg ->
         case arg do
-          "$zero" -> <<?$,0::8>>
+          "$zero" -> <<0::8>>
           <<?$,rest::binary>> when rest not in registers() -> throw([reg_name: <<?$,rest::binary>>])
-          <<?$,a::8,b::8>> when a in ?0..?3 -> <<?$,(a-?0)*10+(b-?0)::8>>
-          <<?$,a::8>> when a in ?0..?9 -> <<?$,a-?0::8>>
+          <<?$,a::8,b::8>> when a in ?0..?2 or a == ?3 and b in ?0..?1 -> <<(a-?0)*10+(b-?0)::8>>
+          <<?$,a::8>> when a in ?0..?9 -> <<a-?0::8>>
           <<?$,a::16>> -> resolve_reg(a)
           _ -> cond do
-          Enum.all?(to_charlist(arg), & &1 in ?0..?9) -> <<String.to_integer(arg)::32>> # Making this 32 bits for data purposes - it will be truncated to 16 bits later for immediate addressing
+          Enum.all?(to_charlist(arg), & &1 in ?0..?9) -> <<String.to_integer(arg)::32>>
           String.match?(arg, ~r/0x[[:xdigit:]]+/i) -> <<String.to_integer(String.trim(arg, "0x"), 16)::32>>
           true -> arg
           end
         end
       end)
-      |> Enum.join(", ")
+      |> Enum.join()
     )
   end
 
