@@ -7,7 +7,7 @@ defmodule Mips.Const do
   I have also included the function to resolve register aliases (such as $zero = $0) in this file as it involves a lot of lines which would clutter the main file.
   """
 
-  @spec resolve_reg(reg_name::integer()) :: <<_::8>>
+  @spec resolve_reg(reg_name::integer()) :: <<_::5>>
   @spec all_permutations(string::binary()) :: list(binary())
   @spec registers :: list(binary())
   @spec op_1 :: list(binary())
@@ -65,35 +65,35 @@ defmodule Mips.Const do
 
   """
 
-  def resolve_reg(24948), do: <<1::8>>
-  def resolve_reg(30256), do: <<2::8>>
-  def resolve_reg(30257), do: <<3::8>>
-  def resolve_reg(24880), do: <<4::8>>
-  def resolve_reg(24881), do: <<5::8>>
-  def resolve_reg(24882), do: <<6::8>>
-  def resolve_reg(24883), do: <<7::8>>
-  def resolve_reg(29744), do: <<8::8>>
-  def resolve_reg(29745), do: <<9::8>>
-  def resolve_reg(29746), do: <<10::8>>
-  def resolve_reg(29747), do: <<11::8>>
-  def resolve_reg(29748), do: <<12::8>>
-  def resolve_reg(29749), do: <<13::8>>
-  def resolve_reg(29750), do: <<14::8>>
-  def resolve_reg(29751), do: <<15::8>>
-  def resolve_reg(29488), do: <<16::8>>
-  def resolve_reg(29489), do: <<17::8>>
-  def resolve_reg(29490), do: <<18::8>>
-  def resolve_reg(29491), do: <<19::8>>
-  def resolve_reg(29492), do: <<20::8>>
-  def resolve_reg(29493), do: <<21::8>>
-  def resolve_reg(29494), do: <<22::8>>
-  def resolve_reg(29495), do: <<23::8>>
-  def resolve_reg(29752), do: <<24::8>>
-  def resolve_reg(29753), do: <<25::8>>
-  def resolve_reg(27440), do: <<26::8>>
-  def resolve_reg(27441), do: <<27::8>>
-  def resolve_reg(26480), do: <<28::8>>
-  def resolve_reg(29496), do: <<29::8>>
-  def resolve_reg(29552), do: <<30::8>>
-  def resolve_reg(29281), do: <<31::8>>
+  def resolve_reg(24948), do: <<1::5>>
+  def resolve_reg(30256), do: <<2::5>>
+  def resolve_reg(30257), do: <<3::5>>
+  def resolve_reg(24880), do: <<4::5>>
+  def resolve_reg(24881), do: <<5::5>>
+  def resolve_reg(24882), do: <<6::5>>
+  def resolve_reg(24883), do: <<7::5>>
+  def resolve_reg(29744), do: <<8::5>>
+  def resolve_reg(29745), do: <<9::5>>
+  def resolve_reg(29746), do: <<10::5>>
+  def resolve_reg(29747), do: <<11::5>>
+  def resolve_reg(29748), do: <<12::5>>
+  def resolve_reg(29749), do: <<13::5>>
+  def resolve_reg(29750), do: <<14::5>>
+  def resolve_reg(29751), do: <<15::5>>
+  def resolve_reg(29488), do: <<16::5>>
+  def resolve_reg(29489), do: <<17::5>>
+  def resolve_reg(29490), do: <<18::5>>
+  def resolve_reg(29491), do: <<19::5>>
+  def resolve_reg(29492), do: <<20::5>>
+  def resolve_reg(29493), do: <<21::5>>
+  def resolve_reg(29494), do: <<22::5>>
+  def resolve_reg(29495), do: <<23::5>>
+  def resolve_reg(29752), do: <<24::5>>
+  def resolve_reg(29753), do: <<25::5>>
+  def resolve_reg(27440), do: <<26::5>>
+  def resolve_reg(27441), do: <<27::5>>
+  def resolve_reg(26480), do: <<28::5>>
+  def resolve_reg(29496), do: <<29::5>>
+  def resolve_reg(29552), do: <<30::5>>
+  def resolve_reg(29281), do: <<31::5>>
 end

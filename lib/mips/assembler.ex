@@ -13,7 +13,7 @@ defmodule Mips.Assembler do
     ### Input:
     Any file containing MIPS assembly in `/priv/0-assembly/` ending with .asm or .s
     ### Output:
-    MIPS machine code is added to `/priv/1-hex/` with the extension changed to .hex
+    An array containing lists of MIPS machine code in pure hexidecimal form & the corresponding file names.
   """
 
   def assemble do
@@ -34,6 +34,11 @@ defmodule Mips.Assembler do
         end
       end), f_name}
     end)
+  end
+
+  def test_format(ln) do
+    format_line(ln)
+    |> IO.puts
   end
 
 
@@ -80,16 +85,15 @@ defmodule Mips.Assembler do
     l_arr = String.split(line, " ", parts: 2)
     if length(l_arr) < 2, do: throw("")
     [op, ar] = l_arr
-    (String.downcase(op)
-    |> String.pad_trailing(7))
-    <> (
+    [(String.downcase(op)
+    |> String.pad_trailing(7)) | (
       String.split(ar, ", ")
       |> Enum.map(fn arg ->
         case arg do
-          "$zero" -> <<0::8>>
+          "$zero" -> <<0::5>>
           <<?$,rest::binary>> when rest not in registers() -> throw([reg_name: <<?$,rest::binary>>])
-          <<?$,a::8,b::8>> when a in ?0..?2 or a == ?3 and b in ?0..?1 -> <<(a-?0)*10+(b-?0)::8>>
-          <<?$,a::8>> when a in ?0..?9 -> <<a-?0::8>>
+          <<?$,a::8,b::8>> when a in ?0..?2 or a == ?3 and b in ?0..?1 -> <<(a-?0)*10+(b-?0)::5>>
+          <<?$,a::8>> when a in ?0..?9 -> <<a-?0::5>>
           <<?$,a::16>> -> resolve_reg(a)
           _ -> cond do
           Enum.all?(to_charlist(arg), & &1 in ?0..?9) -> <<String.to_integer(arg)::32>>
@@ -98,8 +102,7 @@ defmodule Mips.Assembler do
           end
         end
       end)
-      |> Enum.join()
-    )
+    )] |> Enum.into(<<>>, fn <<x::bits>> -> <<x::bits>> end)
   end
 
 

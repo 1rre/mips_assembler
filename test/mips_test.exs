@@ -1,6 +1,9 @@
 defmodule MipsTest do
   use ExUnit.Case
 
+  test "format" do
+    Mips.Assembler.test_format("add $16, $31, $2")
+  end
 
   test "start test" do
     Mips.start()
