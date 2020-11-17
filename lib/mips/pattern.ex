@@ -54,20 +54,21 @@ defmodule Mips.Pattern do
   @doc """
   Resolves a register in string form to its integer value for use in hex ops
   """
-  def register(reg)
-  def register(<<x::8, y::8>>) when x in ?1..?2 and y in ?0..?9, do: (x - ?0) * 10 + y - ?0
-  def register(<<?v,x::8>>) when x in ?0..?1, do: x - ?0 + 2
-  def register(<<?a,x::8>>) when x in ?0..?3, do: x - ?0 + 4
-  def register(<<?t,x::8>>) when x in ?0..?7, do: x - ?0 + 8
-  def register(<<?s,x::8>>) when x in ?0..?7, do: x - ?0 + 16
-  def register(<<?t,x::8>>) when x in ?8..?9, do: x - ?0 + 24
-  def register(<<?k,x::8>>) when x in ?0..?1, do: x - ?0 + 26
-  def register(<<?3,x::8>>) when x in ?0..?1, do: x - ?0 + 30
-  def register("zero"), do: 0
-  def register("at"), do: 1
-  def register("gp"), do: 28
-  def register("sp"), do: 29
-  def register("s8"), do: 30
-  def register("ra"), do: 31
-  def register(x), do: throw "Unrecognised register #{x}"
+
+  def register(<<?$,x::8,y::8>>) when x in ?1..?2 and y in ?0..?9, do: (x - ?0) * 10 + y - ?0
+  def register(<<?$,?v,x::8>>) when x in ?0..?1, do: x - ?0 + 2
+  def register(<<?$,?a,x::8>>) when x in ?0..?3, do: x - ?0 + 4
+  def register(<<?$,?t,x::8>>) when x in ?0..?7, do: x - ?0 + 8
+  def register(<<?$,?s,x::8>>) when x in ?0..?7, do: x - ?0 + 16
+  def register(<<?$,?t,x::8>>) when x in ?8..?9, do: x - ?0 + 24
+  def register(<<?$,?k,x::8>>) when x in ?0..?1, do: x - ?0 + 26
+  def register(<<?$,?3,x::8>>) when x in ?0..?1, do: x - ?0 + 30
+  def register(<<?$,x::8>>) when x in ?0..?9, do: (x - ?0)
+  def register("$zero"), do: 0
+  def register("$at"), do: 1
+  def register("$gp"), do: 28
+  def register("$sp"), do: 29
+  def register("$s8"), do: 30
+  def register("$ra"), do: 31
+  def register(x), do: throw {:register, x}
 end

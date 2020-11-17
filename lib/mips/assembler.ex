@@ -35,7 +35,6 @@ defmodule Mips.Assembler do
     # Because of how Elixir/Erlang handles lists, it's faster to assemble the list back to front then reverse them.
     content = Enum.reverse(text) ++ Enum.reverse(data)
 
-
     {instructions, labels} = try do
       expand_early(content)
      catch
@@ -46,67 +45,91 @@ defmodule Mips.Assembler do
         Mips.Exception.raise(file: f_name, line: hd(lns), message: "Label '#{label} declared multiple times on lines: #{Enum.join(lns, ", ")}")
     end
     Enum.map(instructions, fn
-      op when is_bitstring(op) -> op
+      {:mem, op} -> op
       %{align: to} -> %{align: to}
       op ->
         try do
-          resolve_instruction(op, labels)
+          Regex.run(~r/(?<a>([^\s]+))(\s((?<ar0>([^,]+))(,\s(?<ar1>([^,]+))(,\s(?<ar2>([^,]+)))?)?)?)?/, op, capture: :all_names)
+          |> List.update_at(0, &String.downcase/1)
+          |> Enum.reject(&""==&1)
+          |> resolve_instruction(labels)
         catch
+          :throw, {:instr, instr} ->
+            ln = Enum.find(lines, {nil, ""}, fn {txt, _} -> String.contains?(txt, instr) end)
+            |> elem(1)
+            Mips.Exception.raise(file: f_name, line: ln, message: "Invalid instruction #{instr}")
+          :throw, {:offset, int} ->
+            ln = Enum.find(lines, {nil, ""}, fn {txt, _} -> String.contains?(txt, int) end)
+            |> elem(1)
+            Mips.Exception.raise(file: f_name, line: ln, message: "Invalid offset #{int}. Offsets should be a valid label or offset.")
+          :throw, {:register, reg} ->
+            ln = Enum.find(lines, {nil, ""}, fn {txt, _} -> String.contains?(txt, reg) end)
+            |> elem(1)
+            Mips.Exception.raise(file: f_name, line: ln, message: "Invalid register #{reg}")
           :throw, label ->
+            IO.puts(label)
             ln = Enum.find(lines, {nil, ""}, fn {txt, _} -> String.contains?(txt, label) end)
             |> elem(1)
-            Mips.Exception.raise(file: f_name, line: ln, message: "Label '#{label} was not found.")
+            Mips.Exception.raise(file: f_name, line: ln, message: "Label '#{label}' was not found.")
         end
       end
     ) |> Enum.reduce(<<>>, fn
       %{align: to}, acc ->
-        size = to * 8 * ceil(byte_size(acc) / (to * 8)) - byte_size(acc)
+        size = (to * ceil(byte_size(acc) / to)) * 8 - bit_size(acc)
         <<acc::bits, 0::size(size)>>
       v, acc -> <<acc::bits, v::bits>>
       end
     )
+    |> write_hex(f_name)
+  end
+
+  defp write_hex(m_code, f_name) do
+    File.cd!("1-hex", fn ->
+      String.replace(f_name, ~r/\.(asm|s)\z/, ".hex")
+      |> File.write!(m_code, [:raw])
+    end)
   end
 
 
   defp expand_early(lines) do
     earlies = Enum.map(lines, fn {line, l_num} ->
-      if Regex.match?(~r/[a-z|_]+:.*/, line) do
+      {if Regex.match?(~r/[a-z|_]+:.*/, line) do
         [header, op] = String.split(line, ": ")
         try do
           case resolve_early(op) do
             x when is_list(x) -> List.update_at(x, 0, &{header,&1})
-            x when is_bitstring(x) -> {header, x}
+            x -> {header, x}
           end
         catch
           :throw, reason -> throw {l_num, reason}
         end
       else
         resolve_early(line)
-      end
+      end, l_num}
     end)
     |> List.flatten()
-    {Enum.map(earlies, fn {_, x} -> x; x -> x end), Enum.reduce(earlies, {%{}, 0}, fn
-      {header, x}, {map, acc} when is_bitstring(x) ->
+    {Enum.map(earlies, fn {{_, x}, l_num} -> {x, l_num}; x -> x end), Enum.reduce(earlies, {%{}, 0}, fn
+      {header, {{:mem, x}, l_num}}, {map, acc} when is_bitstring(x) ->
         if Map.has_key?(map, header) do
-          throw header
+          throw {:header, header, l_num}
         else
           {Map.put(map, header, acc), acc + byte_size(x)}
         end
-      {header, %{align: to}}, {map, acc} ->
+      {header, {%{align: to}, l_num}}, {map, acc} ->
         if Map.has_key?(map, header) do
-          throw header
+          throw {:header, header, l_num}
         else
-          {Map.put(map, header, acc), to * 8 * ceil(acc / (to * 8))}
+          {Map.put(map, header, acc), to * ceil(acc / to)}
         end
-      {header, _}, {map, acc} ->
+      {header, {_, l_num}}, {map, acc} ->
         if Map.has_key?(map, header) do
-          throw header
+          throw {:header, header, l_num}
         else
           {Map.put(map, header, acc), acc + 4}
         end
-      x, {map, acc} when is_bitstring(x) -> {map, acc + byte_size(x)}
+      {x,_}, {map, acc} when is_bitstring(x) -> {map, acc + byte_size(x)}
       _, {map, acc} -> {map, acc + 4}
-      %{align: to}, {map, acc} ->  {map, to * 8 * ceil(acc / (to * 8))}
+      {%{align: to},_}, {map, acc} ->  {map, to * ceil(acc / to)}
       end
     ) |> elem(0)}
   end

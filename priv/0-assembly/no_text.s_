@@ -1,5 +1,5 @@
 lw $1, byt
-byt: .byte 0x32
+byt: .word 0xd3
 .data
 pow: .byte 0x32
 .align 4
