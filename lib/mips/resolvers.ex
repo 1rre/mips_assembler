@@ -110,9 +110,16 @@ defmodule Mips.Resolvers do
 
 
 
-  defp resolve_pseudo(["abs", r0, r1]) do
-    ["addu #{r0}, #{r1}", ]
+  defp resolve_pseudo([r0, r1, "abs"]), do: ["addu #{r0}, #{r1}, $0", "bgez #{2}, 8", "sub #{r0}, #{r1}, $0"]
+  defp resolve_pseudo([r0, r1, label, "blt"]), do: ["slt $1, #{r0}, #{r1}", "bne $1, $0, #{label}"]
+  defp resolve_pseudo([r0, im1, "li"]) do
+    <<l::16,h::16>> = <<integer(im1)::32>>
+    ["lui $at, #{h}", "ori #{r0}, $at, #{l}"]
   end
+  defp resolve_pseudo([a0, a1, a2, cmd]), do: ["#{cmd} #{a0}, #{a1}, #{a2}"]
+  defp resolve_pseudo([a0, a1, cmd]), do: ["#{cmd} #{a0}, #{a1}"]
+  defp resolve_pseudo([a0, cmd]), do: ["#{cmd} #{a0}"]
+  defp resolve_pseudo([cmd]), do: ["#{cmd}"]
 
 
 
