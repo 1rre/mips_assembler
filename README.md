@@ -117,7 +117,7 @@ LA      $r, <label>
 * Labels must currently be on the same line as or line immediately before the position they are pointing to (I hope to fix this soon)
 * Integers can be in decimal (0-9) form, or hex (0x(0-f), case insensitive) form.
 * Accepted escape characters are the same as C, excluding \uhhhh and \Uhhhhhhhh as these require more than 8 bits to store (I could easily add these if necessary)
-* Files to be assembled should be placed in [0-assembly](/priv/0-assembly/) and end in `.s` or `.asm`
+* Files to be assembled should be placed in `/priv/0-assembly/` and end in `.s` or `.asm`
 * Labels can contain any alphabetic chars or underscores and are case sensitive.
 
 </details>
