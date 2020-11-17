@@ -123,14 +123,14 @@ LA      $r, <label>
 
 ## Dependencies
 
-This assembler is written in Elixir and runs on the Erlang runtime system. That means that to compile this program you must have "Elixir" installed and to run the compiled binary you must have "Erlang" installed.
+This assembler is written in Elixir and runs on the Erlang runtime system. That means that to compile this program you must have "Elixir" installed and to run the compiled escript downloadable in [releases](https://github.com/tjm1518/mips_assembler/releases) you must have "Erlang" installed.
 
 * These can both be installed with the command `apt-get install elixir`  
 * If you only wish to run the compiled escript, you can just install Erlang with `apt-get install erlang`
 
 ## Downloading
 
-You can either clone this repository or download the [latest release](https://github.com/tjm1518/mips_assembler/releases).
+You can either clone this repository or download the [latest release](https://github.com/tjm1518/mips_assembler/releases/latest).
 
 ## Compiling
 
