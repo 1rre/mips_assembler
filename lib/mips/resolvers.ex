@@ -4,6 +4,12 @@ defmodule Mips.Resolvers do
   @spec resolve_pseudo([binary]) :: list(binary)
   @spec resolve_early(inst::binary) :: list(binary) | bitstring()
 
+  def resolve_instruction(op, labels) do
+    _ = labels
+    IO.puts(op)
+    <<op>>
+  end
+
   # Null terminated string #
   defp resolve_data(<<".asciiz ", rest::binary>>) do
     s_r = ~r/\A\"(?<s>[^"]*)\"\z/

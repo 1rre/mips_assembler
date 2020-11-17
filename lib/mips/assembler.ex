@@ -40,13 +40,31 @@ defmodule Mips.Assembler do
       expand_early(content)
      catch
       :throw, {l_num, reason} -> Mips.Exception.raise(file: f_name, line: l_num, message: reason)
-      :throw, header ->
-        lns = Enum.filter(lines, fn {txt, _} -> String.contains?(txt, header) end)
+      :throw, label ->
+        lns = Enum.filter(lines, fn {txt, _} -> String.contains?(txt, label <> ":") end)
         |> Enum.map(&elem(&1, 1))
-        Mips.Exception.raise(file: f_name, line: hd(lns), message: "Label '#{header} declared multiple times on lines: #{Enum.join(lns, ", ")}")
+        Mips.Exception.raise(file: f_name, line: hd(lns), message: "Label '#{label} declared multiple times on lines: #{Enum.join(lns, ", ")}")
     end
-
-    IO.puts(Map.keys(labels))
+    Enum.map(instructions, fn
+      op when is_bitstring(op) -> op
+      %{align: to} -> %{align: to}
+      op ->
+        try do
+          resolve_instruction(op, labels)
+        catch
+          :throw, label ->
+            ln = Enum.find(lines, {nil, ""}, fn {txt, _} -> String.contains?(txt, label) end)
+            |> elem(1)
+            Mips.Exception.raise(file: f_name, line: ln, message: "Label '#{label} was not found.")
+        end
+      end
+    ) |> Enum.reduce(<<>>, fn
+      %{align: to}, acc ->
+        size = to * 8 * ceil(byte_size(acc) / (to * 8)) - byte_size(acc)
+        <<acc::bits, 0::size(size)>>
+      v, acc -> <<acc::bits, v::bits>>
+      end
+    )
   end
 
 
@@ -67,7 +85,7 @@ defmodule Mips.Assembler do
       end
     end)
     |> List.flatten()
-    {earlies, Enum.reduce(earlies, {%{}, 0}, fn
+    {Enum.map(earlies, fn {_, x} -> x; x -> x end), Enum.reduce(earlies, {%{}, 0}, fn
       {header, x}, {map, acc} when is_bitstring(x) ->
         if Map.has_key?(map, header) do
           throw header
