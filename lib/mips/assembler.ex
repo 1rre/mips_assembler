@@ -15,7 +15,7 @@ defmodule Mips.Assembler do
     Run the assembler on each .s or .asm file, converting it to MIPS machine code.
 
     ### Input:
-    Any file containing MIPS assembly in `/priv/0-assembly/` ending with .asm or .s
+    Any file containing MIPS assembly in `resources/0-assembly/` ending with .asm or .s
     ### Output:
     An array containing lists of MIPS machine code in pure hexidecimal form & the corresponding file names.
   """
