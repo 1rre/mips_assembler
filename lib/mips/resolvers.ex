@@ -1,6 +1,8 @@
 defmodule Mips.Resolvers do
   import Mips.Pattern
   @spec resolve_data(data::bitstring()) :: bitstring()
+  @spec resolve_pseudo([]) :: nil
+  @spec resolve_early(binary) :: nil | bitstring
 
   # Null terminated string #
   def resolve_data(<<".asciiz ", rest::binary>>) do
@@ -106,12 +108,19 @@ defmodule Mips.Resolvers do
     %{align: size}
   end
 
-  def resolve_op(<<".globl ", _::bits>>), do: {nil, <<>>}  # Global directives aren't needed for us?
-  def resolve_op(<<".global ", _::bits>>), do: {nil, <<>>}
-  def resolve_op(instr) do
-    case String.split(instr, ": ") do
-      [label, op] -> :ok
-      [op] -> :ok
+
+
+  defp resolve_pseudo(["abs", r0, r1]) do
+    "addu"
+  end
+
+
+
+  def resolve_early(op) do
+    try do
+      resolve_data(op)
+    catch
+      _,_ -> Regex.run(~r/(?<op>([^\s]+))(\s((?<a0>([^,]+))(,\s(?<a1>([^,]+))(,\s(?<a2>([^,]+)))?)?)?)?/, op, capture: :all_names) |> resolve_pseudo()
     end
   end
 

@@ -7,6 +7,7 @@ defmodule Mips.Pattern do
   @spec integer(int::binary)  :: integer
   @spec register(reg::binary) :: integer
 
+
   @doc """
   Replace a character escaped with a backslash with its escape character.
   ### Inputs:
