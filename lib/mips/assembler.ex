@@ -25,8 +25,8 @@ defmodule Mips.Assembler do
     |> Enum.map(&Task.async(fn -> try do assemble_file(&1) catch _,reason -> {:err, reason} end end))
     |> Task.await_many(:infinity)
     |> Enum.map(fn
-      {_, {:ok, x}} -> x
       {:err, exception} -> Exception.message(exception) |> IO.warn([])
+      x -> x
     end)
     |> Enum.reject(&:ok==&1)
     |> write_hex()
