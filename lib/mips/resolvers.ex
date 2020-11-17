@@ -483,6 +483,19 @@ defmodule Mips.Resolvers do
         end
     end
   end
+  # As la includes a label, it is split in 2 and later.
+  def resolve_instruction(["la", r0, lb, <<code>>],ls) do
+    <<h::16, l::16>> = if Map.has_key?(ls, lb) do
+      <<Map.get(ls, lb)::32>>
+    else
+      throw {:label, lb}
+    end
+    t = register(r0)
+    case code do
+      0 -> <<15::6,1::10,h::16>>
+      1 -> <<13::6,1::5,t::5,l::16>>
+    end
+  end
   def resolve_instruction([hd | instr],_), do: throw({:instr, hd <> " " <> Enum.join(instr, ", ")})
 
 
@@ -601,6 +614,7 @@ defmodule Mips.Resolvers do
     <<l::16,h::16>> = <<integer(im)::32>>
     ["lui $at, #{h}", "ori #{r0}, $at, #{l}"]
   end
+  defp resolve_pseudo(["la",r0, label]), do: [<<"la #{r0}, #{label}, ", 0::8>>, <<"la #{r0}, #{label}, ", 1::8>>]
   defp resolve_pseudo([cmd, a0, a1, a2]), do: ["#{cmd} #{a0}, #{a1}, #{a2}"]
   defp resolve_pseudo([cmd, a0, a1]), do: ["#{cmd} #{a0}, #{a1}"]
   defp resolve_pseudo([cmd, a0]), do: ["#{cmd} #{a0}"]

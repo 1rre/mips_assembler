@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Mips.Assemble do
+defmodule Mix.Tasks.Mips do
   use Mix.Task
   @spec run(any) :: :ok
 
