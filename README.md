@@ -167,3 +167,5 @@ An escript (runable with `./`) can be compiled with running `mix escript.build` 
 The escript can be run with `./mips` provided you have the Erlang runtime system installed. Running the script for the first time in a clean environment will set up the directory structure, alternatively if `resources/0-assembly/` is present, it will assemble each assembly file ending with `.s` or `.asm`
 
 Alternatively, the program can be run directly through the Mix build tool by using the command `mix` in the root directory of the project.
+
+There is also the option to only assemble a single file by passing its path as a command line argument.

@@ -5,6 +5,7 @@ defmodule Mips.Assembler do
   """
 
   @spec assemble() :: :ok
+  @spec assemble_one(binary) :: :ok
   @spec write_hex([{bitstring(), binary()},...]) :: :ok
   @spec assemble_file({binary, list(binary)}) :: {bitstring, binary}
   @spec expand_early(list({binary, integer})) :: {list(any), any}
@@ -30,6 +31,23 @@ defmodule Mips.Assembler do
     end)
     |> Enum.reject(&:ok==&1)
     |> write_hex()
+  end
+
+
+  @doc """
+  Assemble a single file specified by the user rather than all files in resources/0-assembly/
+  """
+
+  def assemble_one(f_name) do
+    {m_code, _} = {f_name, File.read!(f_name)
+      |> String.replace(~r/#.*$/m, "")
+      |> String.replace(~r/(?<_>[a-z|_]+):([[:space:]]*)/im,"\\g{1}:\s")
+      |> String.split(~r/[[:space:]]*\n[[:space:]]*/)
+      |> Enum.with_index(1)
+      |> format_file()}
+    |> assemble_file()
+    String.replace(f_name, ~r/\.(asm|s)\z/, ".hex")
+    |> File.write!(m_code, [:raw])
   end
 
   ###################################
