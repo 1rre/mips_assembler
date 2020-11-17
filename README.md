@@ -78,7 +78,8 @@ SH      $r, <label>
 SW      $r, offset($r)
 SW      $r, <label>
 ```
-
+</details>
+<details>
 <summary> Supported Pseudo Instructions </summary>
 <br>
 
@@ -110,6 +111,7 @@ LA      $r, <label>
 <details>
 <summary> Syntax </summary>
 <br>
+
 * Data and text blocks can optionally be demarked with `.data` and `.text`, these ensure that all text comes before all data.
 * `.globl` directives are currently ignored
 * Labels must currently be on the same line as or line immediately before the position they are pointing to (I hope to fix this soon)
@@ -117,4 +119,5 @@ LA      $r, <label>
 * Accepted escape characters are the same as C, excluding \uhhhh and \Uhhhhhhhh as these require more than 8 bits to store (I could easily add these if necessary)
 * Files to be assembled should be placed in [0-assembly](/priv/0-assembly/) and end in `.s` or `.asm`
 * Labels can contain any alphabetic chars or underscores and are case sensitive.
+
 </details>
