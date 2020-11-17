@@ -1,5 +1,6 @@
-defmodule Mix.Tasks.Mips.Compile do
+defmodule Mix.Tasks.Mips.Assemble do
   use Mix.Task
+  @spec run(any) :: :ok
 
   def run(_) do
     File.cd!(:code.priv_dir(:mips))

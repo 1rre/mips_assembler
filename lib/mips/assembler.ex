@@ -1,7 +1,10 @@
 defmodule Mips.Assembler do
   import Mips.Resolvers
+  @moduledoc """
+  Contains the main functions for assembling the MIPS assembly to machine code.
+  """
 
-  @spec assemble() :: list(<<_::32>>)
+  @spec assemble() :: :ok
   @spec read_files() :: list(list(binary()))
   @spec format_file(lines::list(binary())) :: list(binary())
 
@@ -16,7 +19,23 @@ defmodule Mips.Assembler do
 
   def assemble do
     read_files()
-    |> Enum.map(&assemble_file/1)
+    |> Enum.map(&Task.async(fn -> assemble_file(&1) end))
+    |> Enum.map(&Task.await/1)
+    |> write_hex()
+  end
+
+  ###################################
+  # Write the outputs to a hex file #
+
+  defp write_hex(hexes) do
+    File.cd!("1-hex", fn ->
+      Enum.each(hexes, fn
+        {m_code, f_name} ->
+          String.replace(f_name, ~r/\.(asm|s)\z/, ".hex")
+          |> File.write!(m_code, [:raw])
+          _ -> nil
+      end)
+    end)
   end
 
   ###################################################
@@ -44,7 +63,7 @@ defmodule Mips.Assembler do
         Mips.Exception.raise(file: f_name, line: hd(lns), message: "Label '#{label} declared multiple times on lines: #{Enum.join(lns, ", ")}")
       :throw, {l_num, reason} -> Mips.Exception.raise(file: f_name, line: l_num, message: reason)
     end
-    Enum.map(instructions, fn
+    {Enum.map(instructions, fn
       {{:mem, op}, _} -> op
       {%{align: to}, _} -> %{align: to}
       {op, l_num} ->
@@ -74,17 +93,12 @@ defmodule Mips.Assembler do
       v, acc ->
         <<acc::bits, v::bits>>
       end
-    )
-    |> write_hex(f_name)
+    ), f_name}
   end
 
-  defp write_hex(m_code, f_name) do
-    File.cd!("1-hex", fn ->
-      String.replace(f_name, ~r/\.(asm|s)\z/, ".hex")
-      |> File.write!(m_code, [:raw])
-    end)
-  end
 
+  ###############################################################################################################################
+  # Resolve the positions of labels in the code as well as expanding data and pseudo-instruction to find their memory footprint #
 
   defp expand_early(lines) do
     earlies = Enum.map(lines, fn {line, l_num} ->

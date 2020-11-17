@@ -1,9 +1,22 @@
 defmodule Mips.Resolvers do
   import Mips.Pattern
-  @spec resolve_data(data::bitstring()) :: {:mem, bitstring()}
+  @moduledoc """
+  Contains functions that resolve instructions and data directives to machine code.
+  """
+
+  @spec resolve_data(data::bitstring()) :: %{atom()  => integer()} | {:mem, bitstring()}
   @spec resolve_pseudo([binary]) :: list(binary)
   @spec resolve_early(inst::binary) :: %{atom()  => integer()} | list(binary) | {:mem, bitstring()}
   @spec resolve_instruction(op::[binary, ...], labels :: %{binary => integer}) :: <<_::32>>
+  @spec pow_2(non_neg_integer) :: pos_integer
+
+  @doc """
+  Resolve a mips instruction to its hex equivilent.
+  ### Inputs:
+    A list with the op at the head and args as the tail
+  ### Outputs:
+    A 32 bit hex representation of the instruction.
+  """
 
   def resolve_instruction(["sll",r0,r1,im],_) do
     d = register(r1)
@@ -473,8 +486,8 @@ defmodule Mips.Resolvers do
   def resolve_instruction([hd | instr],_), do: throw({:instr, hd <> " " <> Enum.join(instr, ", ")})
 
 
-
-
+  ##############################################
+  # Resolve a data declaration (string or int) #
 
   # Null terminated string #
   defp resolve_data(<<".asciiz ", rest::binary>>) do
@@ -579,6 +592,8 @@ defmodule Mips.Resolvers do
   end
 
 
+  ###########################################################################
+  # Resolve a pseudo-instruction to the multiple instructions it represents #
 
   defp resolve_pseudo(["abs",r0,r1]), do: ["addu #{r0}, #{r1}, $0", "bgez #{2}, 8", "sub #{r0}, #{r1}, $0"]
   defp resolve_pseudo(["blt",r0,r1, label]), do: ["slt $1, #{r0}, #{r1}", "bne $1, $0, #{label}"]
@@ -592,6 +607,9 @@ defmodule Mips.Resolvers do
   defp resolve_pseudo([cmd]), do: ["#{cmd}"]
 
 
+  @doc """
+  Resolve the instructions which will have a memory footprint different to 32, such as pseudo-instructions and data directives.
+  """
 
   def resolve_early(op) do
     try do
@@ -605,6 +623,9 @@ defmodule Mips.Resolvers do
     end
   end
 
-  def pow_2(0), do: 1
-  def pow_2(x), do: 2 * pow_2(x - 1)
+  ##################################
+  # Fast function to calculate 2^n #
+
+  defp pow_2(0), do: 1
+  defp pow_2(x), do: 2 * pow_2(x - 1)
 end
