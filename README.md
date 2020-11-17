@@ -89,6 +89,8 @@ BLT     $r, $r, <label>   # I'm not sure if this should be in here
 LI      $r, im
 LA      $r, <label>
 ```
+</details>
+<details>
 
 <summary> Supported Data Directives </summary>
 <br>
@@ -104,7 +106,8 @@ LA      $r, <label>
 .asciiz   "null-terminated string" # Including escape characters
 
 ```
-
+</details>
+<details>
 <summary> Syntax </summary>
 <br>
 * Data and text blocks can optionally be demarked with `.data` and `.text`, these ensure that all text comes before all data.
