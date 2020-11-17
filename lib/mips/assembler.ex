@@ -160,6 +160,7 @@ defmodule Mips.Assembler do
       |> Enum.filter(&Regex.match?(~r/.+\.(asm|s)\z/, &1))
       |> Enum.map(fn f_name ->
         {f_name, File.read!(f_name)
+          |> String.replace(~r/#.*$/m, "")
           |> String.replace(~r/(?<_>[a-z|_]+):([[:space:]]*)/im,"\\g{1}:\s")
           |> String.split(~r/[[:space:]]*\n[[:space:]]*/)
           |> Enum.with_index(1)
@@ -174,8 +175,7 @@ defmodule Mips.Assembler do
 
   defp format_file(lines) do
     Enum.map(lines, fn {line, i} ->
-      String.replace(line, ~r/#.*\z/, "")
-      |> String.trim()
+      String.trim(line)
       |> String.replace(~r/[[:space:]]+/, " ")
       |> String.replace(~r/[[:blank:]]?,[[:blank:]]?/, ",\s")
       |> String.split("\n")

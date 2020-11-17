@@ -367,7 +367,7 @@ defmodule Mips.Resolvers do
   # Including pseudoinstruction "lh $r, <label>" which is resolved as "lh $r, label($0)"
   def resolve_instruction(["lh",r0,a1],ls) do
     t = register(r0)
-    case Regex.run(~r/\A(?<off>(d+))(\((?<reg>(\$.*)))\)\z/,a1,capture: :all_names) do
+    case Regex.run(~r/\A(?<off>((0x)?((\d|[[:xdigit]])+)))(\((?<reg>(\$.*))\))\z/,a1,capture: :all_names) do
       [of, r1] ->
         o = integer(of)
         s = register(r1)
@@ -384,7 +384,7 @@ defmodule Mips.Resolvers do
   # Including pseudoinstruction "lw $r, <label>" which is resolved as "lw $r, label($0)"
   def resolve_instruction(["lw",r0,a1],ls) do
     t = register(r0)
-    case Regex.run(~r/\A(?<off>(d+))(\((?<reg>(\$.*)))\)\z/,a1,capture: :all_names) do
+    case Regex.run(~r/\A(?<off>((0x)?((\d|[[:xdigit]])+)))(\((?<reg>(\$.*))\))\z/,a1,capture: :all_names) do
       [of, r1] ->
         o = integer(of)
         s = register(r1)
@@ -401,7 +401,7 @@ defmodule Mips.Resolvers do
   # Including pseudoinstruction "lbu $r, <label>" which is resolved as "lbu $r, label($0)"
   def resolve_instruction(["lbu",r0,a1],ls) do
     t = register(r0)
-    case Regex.run(~r/\A(?<off>(d+))(\((?<reg>(\$.*)))\)\z/,a1,capture: :all_names) do
+    case Regex.run(~r/\A(?<off>((0x)?((\d|[[:xdigit]])+)))(\((?<reg>(\$.*))\))\z/,a1,capture: :all_names) do
       [of, r1] ->
         o = integer(of)
         s = register(r1)
@@ -418,7 +418,7 @@ defmodule Mips.Resolvers do
   # Including pseudoinstruction "lhu $r, <label>" which is resolved as "lhu $r, label($0)"
   def resolve_instruction(["lhu",r0,a1],ls) do
     t = register(r0)
-    case Regex.run(~r/\A(?<off>(d+))(\((?<reg>(\$.*)))\)\z/,a1,capture: :all_names) do
+    case Regex.run(~r/\A(?<off>((0x)?((\d|[[:xdigit]])+)))(\((?<reg>(\$.*))\))\z/,a1,capture: :all_names) do
       [of, r1] ->
         o = integer(of)
         s = register(r1)
@@ -435,7 +435,7 @@ defmodule Mips.Resolvers do
   # Including pseudoinstruction "sb $r, <label>" which is resolved as "sb $r, label($0)"
   def resolve_instruction(["sb",r0,a1],ls) do
     t = register(r0)
-    case Regex.run(~r/\A(?<off>(d+))(\((?<reg>(\$.*)))\)\z/,a1,capture: :all_names) do
+    case Regex.run(~r/\A(?<off>((0x)?((\d|[[:xdigit]])+)))(\((?<reg>(\$.*))\))\z/,a1,capture: :all_names) do
       [of, r1] ->
         o = integer(of)
         s = register(r1)
@@ -452,7 +452,7 @@ defmodule Mips.Resolvers do
   # Including pseudoinstruction "sh $r, <label>" which is resolved as "sh $r, label($0)"
   def resolve_instruction(["sh",r0,a1],ls) do
     t = register(r0)
-    case Regex.run(~r/\A(?<off>(d+))(\((?<reg>(\$.*)))\)\z/,a1,capture: :all_names) do
+    case Regex.run(~r/\A(?<off>((0x)?((\d|[[:xdigit]])+)))(\((?<reg>(\$.*))\))\z/,a1,capture: :all_names) do
       [of, r1] ->
         o = integer(of)
         s = register(r1)
@@ -469,7 +469,7 @@ defmodule Mips.Resolvers do
   # Including pseudoinstruction "sw $r, <label>" which is resolved as "sw $r, label($0)"
   def resolve_instruction(["sw",r0,a1],ls) do
     t = register(r0)
-    case Regex.run(~r/\A(?<off>(d+))(\((?<reg>(\$.*)))\)\z/,a1,capture: :all_names) do
+    case Regex.run(~r/\A(?<off>((0x)?((\d|[[:xdigit]])+)))(\((?<reg>(\$.*))\))\z/,a1,capture: :all_names) do
       [of, r1] ->
         o = integer(of)
         s = register(r1)

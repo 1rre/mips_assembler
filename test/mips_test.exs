@@ -1,6 +1,6 @@
 defmodule MipsTest do
   use ExUnit.Case
   test "main" do
-    Mips.start()
+    Mix.Tasks.Mips.run([])
   end
 end
