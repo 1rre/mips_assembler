@@ -28,3 +28,4 @@ mips_assembler-*.tar
 
 # Elixir LS (VSCode Extension)
 /.elixir_ls/
+/mips

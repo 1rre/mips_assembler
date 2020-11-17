@@ -130,7 +130,7 @@ This assembler is written in Elixir and runs on the Erlang runtime system. That 
 
 # Downloading
 
-You can either clone this repository or download the [latest release](/releases/latest).
+You can either clone this repository or download the [latest release](releases/latest).
 
 # Compiling
 
