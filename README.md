@@ -7,7 +7,7 @@ This program assembles MIPS Assembly code to MIPS machine code.
 <summary> Supported Base Instructions </summary>
 <br>
 
-```asm
+```mips
 SLL     $r, $r, im
 SRL     $r, $r, im
 SRA     $r, $r, im
@@ -82,7 +82,7 @@ SW      $r, <label>
 <summary> Supported Pseudo Instructions </summary>
 <br>
 
-```asm
+```mips
 ABS     $r, $r
 BLT     $r, $r, im
 BLT     $r, $r, <label>   # I'm not sure if this should be in here
@@ -95,7 +95,7 @@ LA      $r, <label>
 <summary> Supported Data Directives </summary>
 <br>
 
-```asm
+```mips
 .byte     im
 .byte     im, ...
 .half     im
