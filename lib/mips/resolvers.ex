@@ -2,7 +2,7 @@ defmodule Mips.Resolvers do
   import Mips.Pattern
   @spec resolve_data(data::bitstring()) :: {:mem, bitstring()}
   @spec resolve_pseudo([binary]) :: list(binary)
-  @spec resolve_early(inst::binary) :: list(binary) | {:mem, bitstring()}
+  @spec resolve_early(inst::binary) :: %{atom()  => integer()} | list(binary) | {:mem, bitstring()}
   @spec resolve_instruction(op::[binary, ...], labels :: %{binary => integer}) :: <<_::32>>
 
   def resolve_instruction(["sll",r0,r1,im],_) do
@@ -204,7 +204,7 @@ defmodule Mips.Resolvers do
       l = Map.get(ls, lb)
       <<2::6,l::26>>
     else
-      throw lb
+      throw {:label, lb}
     end
   end
   def resolve_instruction(["jal",lb],ls) do
@@ -212,7 +212,7 @@ defmodule Mips.Resolvers do
       l = Map.get(ls, lb)
       <<3::6,l::26>>
     else
-      throw lb
+      throw {:label, lb}
     end
   end
   def resolve_instruction(["beq",r0,r1,a0],ls) do
@@ -347,7 +347,7 @@ defmodule Mips.Resolvers do
           o = Map.get(ls, a1)
           <<32::6,t::10,o::16>>
         else
-          throw a1
+          throw {:mem_loc, a1}
         end
     end
   end
@@ -364,7 +364,7 @@ defmodule Mips.Resolvers do
           o = Map.get(ls, a1)
           <<33::6,t::10,o::16>>
         else
-          throw a1
+          throw {:mem_loc, a1}
         end
     end
   end
@@ -381,7 +381,7 @@ defmodule Mips.Resolvers do
           o = Map.get(ls, a1)
           <<35::6,t::10,o::16>>
         else
-          throw a1
+          throw {:mem_loc, a1}
         end
     end
   end
@@ -398,7 +398,7 @@ defmodule Mips.Resolvers do
           o = Map.get(ls, a1)
           <<36::6,t::10,o::16>>
         else
-          throw a1
+          throw {:mem_loc, a1}
         end
     end
   end
@@ -415,7 +415,7 @@ defmodule Mips.Resolvers do
           o = Map.get(ls, a1)
           <<37::6,t::10,o::16>>
         else
-          throw a1
+          throw {:mem_loc, a1}
         end
     end
   end
@@ -432,7 +432,7 @@ defmodule Mips.Resolvers do
           o = Map.get(ls, a1)
           <<40::6,t::10,o::16>>
         else
-          throw a1
+          throw {:mem_loc, a1}
         end
     end
   end
@@ -449,7 +449,7 @@ defmodule Mips.Resolvers do
           o = Map.get(ls, a1)
           <<41::6,t::10,o::16>>
         else
-          throw a1
+          throw {:mem_loc, a1}
         end
     end
   end
@@ -466,12 +466,11 @@ defmodule Mips.Resolvers do
           o = Map.get(ls, a1)
           <<43::6,t::10,o::16>>
         else
-          throw a1
+          throw {:mem_loc, a1}
         end
     end
   end
   def resolve_instruction([hd | instr],_), do: throw({:instr, hd <> " " <> Enum.join(instr, ", ")})
-  def resolve_instruction([hd],_), do: throw({:instr, hd})
 
 
 

@@ -38,39 +38,32 @@ defmodule Mips.Assembler do
     {instructions, labels} = try do
       expand_early(content)
      catch
-      :throw, {l_num, reason} -> Mips.Exception.raise(file: f_name, line: l_num, message: reason)
-      :throw, label ->
+      :throw, {:label, label} ->
         lns = Enum.filter(lines, fn {txt, _} -> String.contains?(txt, label <> ":") end)
         |> Enum.map(&elem(&1, 1))
         Mips.Exception.raise(file: f_name, line: hd(lns), message: "Label '#{label} declared multiple times on lines: #{Enum.join(lns, ", ")}")
+      :throw, {l_num, reason} -> Mips.Exception.raise(file: f_name, line: l_num, message: reason)
     end
     Enum.map(instructions, fn
-      {:mem, op} -> op
-      %{align: to} -> %{align: to}
-      op ->
+      {{:mem, op}, _} -> op
+      {%{align: to}, _} -> %{align: to}
+      {op, l_num} ->
         try do
           Regex.run(~r/(?<a>([^\s]+))(\s((?<ar0>([^,]+))(,\s(?<ar1>([^,]+))(,\s(?<ar2>([^,]+)))?)?)?)?/, op, capture: :all_names)
           |> List.update_at(0, &String.downcase/1)
           |> Enum.reject(&""==&1)
           |> resolve_instruction(labels)
         catch
-          :throw, {:instr, instr} ->
-            ln = Enum.find(lines, {nil, ""}, fn {txt, _} -> String.contains?(txt, instr) end)
-            |> elem(1)
-            Mips.Exception.raise(file: f_name, line: ln, message: "Invalid instruction #{instr}")
-          :throw, {:offset, int} ->
-            ln = Enum.find(lines, {nil, ""}, fn {txt, _} -> String.contains?(txt, int) end)
-            |> elem(1)
-            Mips.Exception.raise(file: f_name, line: ln, message: "Invalid offset #{int}. Offsets should be a valid label or offset.")
-          :throw, {:register, reg} ->
-            ln = Enum.find(lines, {nil, ""}, fn {txt, _} -> String.contains?(txt, reg) end)
-            |> elem(1)
-            Mips.Exception.raise(file: f_name, line: ln, message: "Invalid register #{reg}")
-          :throw, label ->
-            IO.puts(label)
-            ln = Enum.find(lines, {nil, ""}, fn {txt, _} -> String.contains?(txt, label) end)
-            |> elem(1)
-            Mips.Exception.raise(file: f_name, line: ln, message: "Label '#{label}' was not found.")
+           :throw, {:mem_loc, label} ->
+              Mips.Exception.raise(file: f_name, line: l_num, message: "Invalid offset #{label}. Argument should be a valid label or register offset.")
+           :throw, {:instr, instr} ->
+              Mips.Exception.raise(file: f_name, line: l_num, message: "Invalid instruction #{instr}")
+           :throw, {:offset, int} ->
+              Mips.Exception.raise(file: f_name, line: l_num, message: "Invalid offset #{int}. Offsets should be a valid label or offset.")
+           :throw, {:register, reg} ->
+              Mips.Exception.raise(file: f_name, line: l_num, message: "Invalid register #{reg}")
+           :throw, {:label, label} ->
+              Mips.Exception.raise(file: f_name, line: l_num, message: "Label '#{label}' was not found.")
         end
       end
     ) |> Enum.reduce(<<>>, fn
@@ -93,22 +86,27 @@ defmodule Mips.Assembler do
 
   defp expand_early(lines) do
     earlies = Enum.map(lines, fn {line, l_num} ->
-      {if Regex.match?(~r/[a-z|_]+:.*/, line) do
+      if Regex.match?(~r/[a-z|_]+:.*/, line) do
         [header, op] = String.split(line, ": ")
         try do
           case resolve_early(op) do
-            x when is_list(x) -> List.update_at(x, 0, &{header,&1})
-            x -> {header, x}
+            x when is_list(x) -> Enum.map(x, &{&1, l_num}) |> List.update_at(0, &{header,&1})
+            x -> {header, {x, l_num}}
           end
         catch
           :throw, reason -> throw {l_num, reason}
         end
       else
         resolve_early(line)
-      end, l_num}
+        |> case do
+          x when is_map(x) -> {x, l_num}
+          {:mem, x} when is_bitstring(x) -> {{:mem, x}, l_num}
+          x -> Enum.map(x, &{&1, l_num})
+        end
+      end
     end)
     |> List.flatten()
-    {Enum.map(earlies, fn {{_, x}, l_num} -> {x, l_num}; x -> x end), Enum.reduce(earlies, {%{}, 0}, fn
+    {Enum.map(earlies, fn {_, {x, l_num}} -> {x, l_num}; x -> x end), Enum.reduce(earlies, {%{}, 0}, fn
       {header, {{:mem, x}, l_num}}, {map, acc} when is_bitstring(x) ->
         if Map.has_key?(map, header) do
           throw {:header, header, l_num}
