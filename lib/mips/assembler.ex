@@ -66,11 +66,13 @@ defmodule Mips.Assembler do
               Mips.Exception.raise(file: f_name, line: l_num, message: "Label '#{label}' was not found.")
         end
       end
-    ) |> Enum.reduce(<<>>, fn
+    )
+    |> Enum.reduce(<<>>, fn
       %{align: to}, acc ->
         size = (to * ceil(byte_size(acc) / to)) * 8 - bit_size(acc)
         <<acc::bits, 0::size(size)>>
-      v, acc -> <<acc::bits, v::bits>>
+      v, acc ->
+        <<acc::bits, v::bits>>
       end
     )
     |> write_hex(f_name)
@@ -86,7 +88,7 @@ defmodule Mips.Assembler do
 
   defp expand_early(lines) do
     earlies = Enum.map(lines, fn {line, l_num} ->
-      if Regex.match?(~r/[a-z|_]+:.*/, line) do
+      if Regex.match?(~r/[a-z|_]+:\s.*/, line) do
         [header, op] = String.split(line, ": ")
         try do
           case resolve_early(op) do

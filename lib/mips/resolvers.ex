@@ -586,7 +586,6 @@ defmodule Mips.Resolvers do
     <<l::16,h::16>> = <<integer(im)::32>>
     ["lui $at, #{h}", "ori #{r0}, $at, #{l}"]
   end
-  defp resolve_pseudo(["la",r0,lb]), do: ["lui #{r0}, #{lb}", ]
   defp resolve_pseudo([cmd, a0, a1, a2]), do: ["#{cmd} #{a0}, #{a1}, #{a2}"]
   defp resolve_pseudo([cmd, a0, a1]), do: ["#{cmd} #{a0}, #{a1}"]
   defp resolve_pseudo([cmd, a0]), do: ["#{cmd} #{a0}"]
@@ -599,7 +598,8 @@ defmodule Mips.Resolvers do
       resolve_data(op)
     catch
       :throw, reason -> throw(reason)
-      _,_ -> Regex.run(~r/(?<a>([^\s]+))(\s((?<ar0>([^,]+))(,\s(?<ar1>([^,]+))(,\s(?<ar2>([^,]+)))?)?)?)?/, op, capture: :all_names)
+      _,_ -> Regex.run(~r/\A(?<a>([^\s]+))(\s((?<ar0>([^,]+))(,\s(?<ar1>([^,]+))(,\s(?<ar2>([^,]+)))?)?)?)?\z/, op, capture: :all_names)
+          |> Enum.reject(&""==&1)
           |> List.update_at(0, &String.downcase/1)
           |> resolve_pseudo()
     end

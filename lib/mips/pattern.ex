@@ -33,7 +33,7 @@ defmodule Mips.Pattern do
         "?" -> "\?"
         <<?x,a::8,b::8>> -> <<a-?0::4,b-?0::4>>
         <<x::8,y::8,z::8>> when x <= ?3 -> <<x-?0::2,y-?0::3,z-?0::3>>
-        x -> throw("Invalid escape: #{x}")
+        x -> throw("Invalid escape: '\\#{x}'")
       end
     end)
   end

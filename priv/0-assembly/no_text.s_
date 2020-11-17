@@ -1,5 +1,0 @@
-lw $1, byt
-byt: .word 0xd3
-.data
-pow: .byte 0x32
-.align 4
