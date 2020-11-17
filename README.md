@@ -87,6 +87,32 @@ SW      $r, <label>
 ABS     $r, $r
 BLT     $r, $r, im
 BLT     $r, $r, <label>   # I'm not sure if this should be in here
+BGT     $r, $r, im
+BGT     $r, $r, <label>   # I'm not sure if this should be in here
+BLE     $r, $r, im
+BLE     $r, $r, <label>   # I'm not sure if this should be in here
+BGE     $r, $r, im
+BGE     $r, $r, <label>   # I'm not sure if this should be in here
+BLTU    $r, $r, im
+BLTU    $r, $r, <label>   # I'm not sure if this should be in here
+BGTU    $r, $r, im
+BGTU    $r, $r, <label>   # I'm not sure if this should be in here
+BLEU    $r, $r, im
+BLEU    $r, $r, <label>   # I'm not sure if this should be in here
+BGEU    $r, $r, im
+BGEU    $r, $r, <label>   # I'm not sure if this should be in here
+NEG     $r, $r
+NOT     $r, $r
+MOVE    $r, $r
+CLEAR   $r
+SGT     $r, $r, $r
+SGE     $r, $r, $r
+SLE     $r, $r, $r
+SGTU    $r, $r, $r
+SGEU    $r, $r, $r
+SLEU    $r, $r, $r
+SEQ     $r, $r, $r
+SNE     $r, $r, $r        # Currently very inefficient (resolves to XORI, XOR, SLT) - any ideas to improve?
 LI      $r, im
 LA      $r, <label>
 ```

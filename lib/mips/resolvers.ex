@@ -608,8 +608,27 @@ defmodule Mips.Resolvers do
   ###########################################################################
   # Resolve a pseudo-instruction to the multiple instructions it represents #
 
-  defp resolve_pseudo(["abs",r0,r1]), do: ["addu #{r0}, #{r1}, $0", "bgez #{2}, 8", "sub #{r0}, #{r1}, $0"]
+  defp resolve_pseudo(["abs",r0,r1]), do: ["addu #{r0}, #{r1}, $0", "bgez #{r1}, 8", "sub #{r0}, #{r1}, $0"]
   defp resolve_pseudo(["blt",r0,r1, label]), do: ["slt $1, #{r0}, #{r1}", "bne $1, $0, #{label}"]
+  defp resolve_pseudo(["bgt",r0,r1, label]), do: ["slt $1, #{r1}, #{r0}", "bne $1, $0, #{label}"]
+  defp resolve_pseudo(["bge",r0,r1, label]), do: ["slt $1, #{r0}, #{r1}", "beq $1, $0, #{label}"]
+  defp resolve_pseudo(["ble",r0,r1, label]), do: ["slt $1, #{r1}, #{r0}", "beq $1, $0, #{label}"]
+  defp resolve_pseudo(["bltu",r0,r1, label]), do: ["sltu $1, #{r0}, #{r1}", "bne $1, $0, #{label}"]
+  defp resolve_pseudo(["bgtu",r0,r1, label]), do: ["sltu $1, #{r1}, #{r0}", "bne $1, $0, #{label}"]
+  defp resolve_pseudo(["bgeu",r0,r1, label]), do: ["sltu $1, #{r0}, #{r1}", "beq $1, $0, #{label}"]
+  defp resolve_pseudo(["bleu",r0,r1, label]), do: ["sltu $1, #{r1}, #{r0}", "beq $1, $0, #{label}"]
+  defp resolve_pseudo(["neg",r0,r1]), do: ["sub #{r0}, $0, #{r1}"]
+  defp resolve_pseudo(["not",r0,r1]), do: ["xori #{r0}, #{r1}, 0xFFFF"]
+  defp resolve_pseudo(["move",r0,r1]), do: ["add #{r0}, $0, #{r1}"]
+  defp resolve_pseudo(["clear",r0]), do: ["lui #{r0}, 0"]
+  defp resolve_pseudo(["sgt",r0,r1,r2]), do: ["slt #{r0}, #{r2}, #{r1}"]
+  defp resolve_pseudo(["sge",r0,r1,r2]), do: ["slt #{r0}, #{r1}, #{r2}","xori #{r0}, #{r0}, 1"]
+  defp resolve_pseudo(["sle",r0,r1,r2]), do: ["slt #{r0}, #{r2}, #{r1}","xori #{r0}, #{r0}, 1"]
+  defp resolve_pseudo(["sgtu",r0,r1,r2]), do: ["sltu #{r0}, #{r2}, #{r1}"]
+  defp resolve_pseudo(["sgeu",r0,r1,r2]), do: ["sltu #{r0}, #{r1}, #{r2}","xori #{r0}, #{r0}, 1"]
+  defp resolve_pseudo(["sleu",r0,r1,r2]), do: ["sltu #{r0}, #{r2}, #{r1}","xori #{r0}, #{r0}, 1"]
+  defp resolve_pseudo(["seq",r0,r1,r2]), do: ["xor #{r0}, #{r1}, #{r2}","sltiu #{r0}, #{r0}, 1"]
+  defp resolve_pseudo(["sne",r0,r1,r2]), do: ["xori #{r0}, #{r1}, 0xFFFF","xor #{r0}, #{r2}, #{r0}","sltiu #{r0}, #{r0}, 0xFFFF"]
   defp resolve_pseudo(["li",r0,im]) do
     <<l::16,h::16>> = <<integer(im)::32>>
     ["lui $at, #{h}", "ori #{r0}, $at, #{l}"]
