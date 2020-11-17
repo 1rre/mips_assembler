@@ -116,7 +116,28 @@ LA      $r, <label>
 * `.globl` directives are currently ignored
 * Integers can be in decimal (0-9) form, or hex (0x(0-f), case insensitive) form.
 * Accepted escape characters are the same as C, excluding \uhhhh and \Uhhhhhhhh as these require more than 8 bits to store (I could easily add these if necessary)
-* Files to be assembled should be placed in `/priv/0-assembly/` and end in `.s` or `.asm`
+* Files to be assembled should be placed in `resources/0-assembly/` and end in `.s` or `.asm`
 * Labels can contain any alphabetic chars or underscores and are case sensitive.
 
 </details>
+
+# Dependencies
+
+This assembler is written in Elixir and runs on the Erlang runtime system. That means that to compile this program you must have "Elixir" installed and to run the compiled binary you must have "Erlang" installed.
+
+* These can both be installed with the command `apt-get install elixir`  
+* If you only wish to run the compiled escript, you can just install Erlang with `apt-get install erlang`
+
+# Downloading
+
+You can either clone this repository or download the [latest release](/releases/latest).
+
+# Compiling
+
+An escript (runable with `./`) can be compiled with running `mix escript.build` in the root directory of the project with Elixir installed on your system.
+
+# Running
+
+The escript can be run with `./mips` provided you have the Erlang runtime system installed. Running the script for the first time in a clean environment will set up the directory structure, alternatively if `resources/0-assembly/` is present, it will assemble each assembly file ending with `.s` or `.asm`
+
+Alternatively, the program can be run directly through the Mix build tool by using the command `mix` in the root directory of the project.

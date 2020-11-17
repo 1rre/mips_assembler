@@ -151,8 +151,8 @@ defmodule Mips.Assembler do
   end
 
 
-  #############################################################
-  # Read all files ending with .asm or .s in /priv/0-assembly #
+  ##################################################################
+  # Read all files ending with .asm or .s in resources/0-assembly/ #
 
   defp read_files do
     File.cd!("0-assembly", fn ->

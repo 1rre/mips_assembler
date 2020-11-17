@@ -8,7 +8,11 @@ defmodule Mips.MixProject do
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      default_task: "mips"
+      default_task: "mips",
+      escript: [
+        main_module: Mix.Tasks.Mips,
+        comment: "Test"
+      ]
     ]
   end
 
