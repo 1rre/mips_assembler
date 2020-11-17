@@ -5,6 +5,9 @@ defmodule Mips.Assembler do
   """
 
   @spec assemble() :: :ok
+  @spec write_hex([{bitstring(), binary()},...]) :: :ok
+  @spec assemble_file({binary, list(binary)}) :: {bitstring, binary}
+  @spec expand_early(list({binary, integer})) :: {list(any), any}
   @spec read_files() :: list(list(binary()))
   @spec format_file(lines::list(binary())) :: list(binary())
 
@@ -42,7 +45,6 @@ defmodule Mips.Assembler do
   # Assemble a single file containing mips assembly #
 
   defp assemble_file({f_name, lines}) do
-
     {_,text,data} = Enum.reduce(lines, {true,[],[]}, fn
       {<<".globl ", _::bits>>,_}, {x,text,data} -> {x,text,data}
       {<<".global ",_::bits>>,_}, {x,text,data} -> {x,text,data}
