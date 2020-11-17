@@ -38,7 +38,6 @@ defmodule Mips.Assembler do
     end)
     # Because of how Elixir/Erlang handles lists, it's faster to assemble the list back to front then reverse them.
     {text,data} = {Enum.reverse(text),Enum.reverse(data)}
-    IO.puts(text)
 
     {data_labels, data_hex} = try do
       assemble_data(data)
@@ -46,6 +45,7 @@ defmodule Mips.Assembler do
       :throw, {l_num, reason} ->
         Mips.Exception.raise([file: f_name, line: l_num, message: reason])
     end
+
     {text_labels, text_hex} = try do
       assemble_text(text)
       {%{}, <<>>}
@@ -67,8 +67,8 @@ defmodule Mips.Assembler do
     end
 
     0
-  end
 
+  end
   ##########################################################################################################################
   # As we don't know if our input is going to be in SPIM or MIPS format, this converts both data and instructions to hex." #
 
@@ -76,9 +76,12 @@ defmodule Mips.Assembler do
     Enum.map(text, fn {line, l_num} ->
       if Regex.match?(~r/[a-z|_]+:.*/, line) do
         [header, op] = String.split(line, ": ")
-        # TODO: Resolve to bitstrings (data) and multiple instructions (pseudoinstructions) then calculate label offsets & resolve labels.
+        case resolve_early(op) do
+          x when is_list(x) -> List.update_at(x, 0, &{header,&1})
+          x when is_bitstring(x) -> {header, x}
+        end
       else
-
+        resolve_early(line)
       end
     end)
   end
@@ -90,26 +93,26 @@ defmodule Mips.Assembler do
     Enum.map(data, fn
       {<<".align ", rest::binary>>, l_num} ->
         try do
-          resolve_data(".align "<>rest)
+          resolve_early(".align "<>rest)
         catch
           :throw, reason -> throw {l_num, reason}
         end
       {<<".space ", rest::binary>>, l_num} ->
         try do
-          resolve_data(".space "<>rest)
+          resolve_early(".space "<>rest)
         catch
           :throw, reason -> throw {l_num, reason}
         end
       {<<?., rest::binary>>, l_num} ->
         try do
-          resolve_data("."<>rest)
+          resolve_early("."<>rest)
         catch
           :throw, reason -> throw {l_num, reason}
         end
       {str, l_num} ->
         try do
           [header, dat] = String.split(str, ": ")
-          {header, resolve_data(dat), l_num}
+          {header, resolve_early(dat), l_num}
         catch
           :throw, reason -> throw {l_num, reason}
           _,_ -> throw {l_num, "Error parsing '#{str}' as data"}
@@ -119,7 +122,7 @@ defmodule Mips.Assembler do
     |> List.flatten
     |> Enum.reduce({%{}, <<>>}, fn
       %{align: to}, {map, acc}  ->
-        size = Integer.mod(to - byte_size(acc), to)
+        size = 8 * (to - Integer.mod(byte_size(acc), to))
         {map, <<acc::bits, 0::size(size)>>}
       {label, data, l_num}, {map, acc} ->
         if Map.has_key?(map, label),

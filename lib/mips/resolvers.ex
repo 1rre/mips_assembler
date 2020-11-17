@@ -1,11 +1,11 @@
 defmodule Mips.Resolvers do
   import Mips.Pattern
   @spec resolve_data(data::bitstring()) :: bitstring()
-  @spec resolve_pseudo([]) :: nil
-  @spec resolve_early(binary) :: nil | bitstring
+  @spec resolve_pseudo([binary]) :: list(binary)
+  @spec resolve_early(inst::binary) :: list(binary) | bitstring()
 
   # Null terminated string #
-  def resolve_data(<<".asciiz ", rest::binary>>) do
+  defp resolve_data(<<".asciiz ", rest::binary>>) do
     s_r = ~r/\A\"(?<s>[^"]*)\"\z/
     Regex.run(s_r, rest, capture: :all_names)
     |> case do
@@ -22,7 +22,7 @@ defmodule Mips.Resolvers do
   end
 
   # Regular string #
-  def resolve_data(<<".ascii ", rest::binary>>) do
+  defp resolve_data(<<".ascii ", rest::binary>>) do
     s_r = ~r/\A\"(?<s>[^"]*)\"\z/
     Regex.run(s_r, rest, capture: :all_names)
     |> case do
@@ -39,7 +39,7 @@ defmodule Mips.Resolvers do
   end
 
   # 8 bits #
-  def resolve_data(<<".byte ", rest::binary()>>) do
+  defp resolve_data(<<".byte ", rest::binary()>>) do
     String.split(rest, ", ")
     |> Enum.map(&
       try do
@@ -55,7 +55,7 @@ defmodule Mips.Resolvers do
   end
 
   # 16 bits #
-  def resolve_data(<<".half ", rest::binary()>>) do
+  defp resolve_data(<<".half ", rest::binary()>>) do
     String.split(rest, ", ")
     |> Enum.map(&
       try do
@@ -71,7 +71,7 @@ defmodule Mips.Resolvers do
   end
 
   # 32 bits #
-  def resolve_data(<<".word ", rest::binary()>>) do
+  defp resolve_data(<<".word ", rest::binary()>>) do
     String.split(rest, ", ")
     |> Enum.map(&
       try do
@@ -87,7 +87,7 @@ defmodule Mips.Resolvers do
   end
 
   # Reserved space #
-  def resolve_data(<<".space ", rest::binary>>) do
+  defp resolve_data(<<".space ", rest::binary>>) do
     size = try do
       integer(rest)
       |> pow_2()
@@ -98,7 +98,7 @@ defmodule Mips.Resolvers do
   end
 
   # Align (resolved later) "
-  def resolve_data(<<".align ", rest::binary>>) do
+  defp resolve_data(<<".align ", rest::binary>>) do
     size = try do
       integer(rest)
       |> pow_2()
@@ -111,7 +111,7 @@ defmodule Mips.Resolvers do
 
 
   defp resolve_pseudo(["abs", r0, r1]) do
-    "addu"
+    ["addu #{r0}, #{r1}", ]
   end
 
 
