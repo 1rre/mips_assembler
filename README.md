@@ -121,22 +121,22 @@ LA      $r, <label>
 
 </details>
 
-# Dependencies
+## Dependencies
 
 This assembler is written in Elixir and runs on the Erlang runtime system. That means that to compile this program you must have "Elixir" installed and to run the compiled binary you must have "Erlang" installed.
 
 * These can both be installed with the command `apt-get install elixir`  
 * If you only wish to run the compiled escript, you can just install Erlang with `apt-get install erlang`
 
-# Downloading
+## Downloading
 
 You can either clone this repository or download the [latest release](https://github.com/tjm1518/mips_assembler/releases).
 
-# Compiling
+## Compiling
 
 An escript (runable with `./`) can be compiled with running `mix escript.build` in the root directory of the project with Elixir installed on your system.
 
-# Running
+## Running
 
 The escript can be run with `./mips` provided you have the Erlang runtime system installed. Running the script for the first time in a clean environment will set up the directory structure, alternatively if `resources/0-assembly/` is present, it will assemble each assembly file ending with `.s` or `.asm`
 
