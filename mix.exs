@@ -10,7 +10,7 @@ defmodule Mips.MixProject do
       deps: deps(),
       default_task: "mips",
       escript: [
-        main_module: Mix.Tasks.Mips,"
+        main_module: Mix.Tasks.Mips,
       ]
     ]
   end
