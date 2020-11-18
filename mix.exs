@@ -10,8 +10,7 @@ defmodule Mips.MixProject do
       deps: deps(),
       default_task: "mips",
       escript: [
-        main_module: Mix.Tasks.Mips,
-        comment: "Escript for MIPS assembler"
+        main_module: Mix.Tasks.Mips,"
       ]
     ]
   end
