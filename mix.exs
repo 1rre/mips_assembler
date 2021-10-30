@@ -18,13 +18,15 @@ defmodule Mips.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      applications: [:logger]
+      applications: [:logger],
+      extra_applications: [:nimble_parsec]
     ]
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:nimble_parsec, "~> 1.1"}
     ]
   end
 end

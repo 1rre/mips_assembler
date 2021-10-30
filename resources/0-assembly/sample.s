@@ -9,6 +9,7 @@ li  $v0, 10                      # Load the exit syscall into register 2
 la  $t0, byt                     # Load the address of "byt" into register 8
 lw  $t1, wrd                     # Load the address of "wrd" into register 9
 lw  $t2, 4($t0)                  # Load the address stored in register 9 offset by 4 into register 10
-beq $t1, $t2, 8                  # Skip the next instruction if registers 9 and 10 have equal contents
+beq $t1, $t2, end                # Skip the next instruction if registers 9 and 10 have equal contents
 j main                           # Jump to "main" (line 7)
-syscall                          # Call to the system, as we loaded 10 into register 2 this will be exit
+end:
+jr $ra                           # End the program

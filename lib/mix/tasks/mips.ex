@@ -1,16 +1,9 @@
 defmodule Mix.Tasks.Mips do
   use Mix.Task
-  @spec run(any) :: :ok
-  @spec main(any) :: :ok
-
-  def main([x]) when is_binary(x) do
-    Mips.Assembler.assemble_one(x)
+  def run([file]) do
+    input = File.read!(file)
+    {:ok, res, _, _, _, _} = Mips.Parser.program(input)
+    out_file = file <> ".bin"
+    File.write!(out_file, res)
   end
-  def main([]) do
-    if !File.exists?("resources"), do: File.mkdir!("resources")
-    File.cd!("resources")
-    Enum.each(["0-assembly", "1-hex"], &File.mkdir(&1))
-    Mips.Assembler.assemble
-  end
-  def run(x), do: main(x)
 end
