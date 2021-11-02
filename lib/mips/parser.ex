@@ -29,8 +29,9 @@ defmodule Mips.Parser do
   upper_case = ?A..?z
   digit = ?0..?9
 
+  defparsecp(:eol, choice([ascii_char([?\n]), eos()]))
   defparsecp(:id_char, ascii_char([lower_case, upper_case, digit, ?_, ?$]))
-  defparsecp(:comment, ascii_char([?#]) |> eventually(ascii_char([?\n])))
+  defparsecp(:comment, ascii_char([?#]) |> eventually(parsec(:eol)))
   defparsecp(:whitespace, ascii_char([?\s, ?\n, ?\t, ?\r]))
   defparsecp(:ws, ignore(repeat(choice([parsec(:whitespace), parsec(:comment)]))))
   defparsecp(:reg, ignore(ascii_char([?$])) |> integer(min: 0, max: 31))
@@ -76,6 +77,31 @@ defmodule Mips.Parser do
     Helpers.parse_rtype("and",   0b100100),
     Helpers.parse_itype("andi",  0b001100),
   ]))
-  defparsec(:program, repeat(parsec(:instr) |> parsec(:ws)))
+  defparsec(:quoted_string,
+    ignore(string("\""))
+    |> repeat(ascii_char([{:not, ?"}]))
+    |> ignore(string("\""))
+    |> reduce(:to_string)
+  )
+  defparsecp(:ascii,
+    ignore(string(".ascii"))
+    |> parsec(:ws)
+    |> parsec(:quoted_string)
+  )
+  defparsecp(:asciiz,
+    ignore(string(".ascii"))
+    |> parsec(:ws)
+    |> parsec(:quoted_string)
+    |> map({:<>, [<<0::8>>]})
+  )
+  defparsecp(:directive, choice([
+    parsec(:ascii),
+    parsec(:asciiz),
+  ])
+  )
+  defparsec(:program,
+    repeat(choice([parsec(:instr), parsec(:directive)])
+    |> parsec(:ws))
+  )
 
 end
